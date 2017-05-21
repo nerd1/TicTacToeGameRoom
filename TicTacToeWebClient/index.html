@@ -11,21 +11,27 @@
         <h1>Tic Tac Toe</h1>
     </header>
     <main>
-        <div id="board">
+        <div id="name">
+            <input id="name_input" autofocus placeholder="Your name..."/>
+        </div>
+        <div id="waiting" class="hidden">
+            Please wait for other player...
+        </div>
+        <div id="board" class="hidden">
             <div class="row">
+                <div id="field0" class="field"></div>
                 <div id="field1" class="field"></div>
                 <div id="field2" class="field"></div>
-                <div id="field3" class="field"></div>
             </div>
             <div class="row">
+                <div id="field3" class="field"></div>
                 <div id="field4" class="field"></div>
                 <div id="field5" class="field"></div>
-                <div id="field6" class="field"></div>
             </div>
             <div class="row">
+                <div id="field6" class="field"></div>
                 <div id="field7" class="field"></div>
                 <div id="field8" class="field"></div>
-                <div id="field9" class="field"></div>
             </div>
         </div>
         <div id="result"></div>

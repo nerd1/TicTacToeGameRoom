@@ -1,19 +1,63 @@
 'use strict'
 
+import io from 'socket.io-client'
+
+let socket = io.connect('http://localhost:3100', {reconnect: true})
+
 export default class{
-    constructor($doc, store){
+
+    constructor($doc){
         this.$doc = $doc
-        this.store = store;
         this.player1 = 0
         this.player2 = 0
         this.player = 1
         this.running = true
+        this.gameEnabled = false
+        this.$nameInput = this.$doc.querySelector("#name_input")
+        this.$board = this.$doc.querySelector("#board")
+        this.$waiting = this.$doc.querySelector("#waiting")
+        this.$nameInput.addEventListener("change", this.onChangeNameInput.bind(this))
         this.$resultDiv = this.$doc.querySelector("#result")
         this.$statsDiv = this.$doc.querySelector("#stats")
         this.$fields = $doc.querySelectorAll("div.field")
         this.$fields.forEach(function(element) {
             element.addEventListener("click", this.onClickField.bind(this))
         }, this);
+
+        // connection
+        socket.on('connect', function() {
+            console.log(socket.id)
+        })
+
+        // messages from server...
+        socket.on('start_game', (data)=>{
+            console.log('game started...')
+            this.$board.classList.remove("hidden")
+        })
+
+        socket.on('your_turn', (data)=>{
+            console.log('your turn...')
+            this.playerToken = data.player
+            this.$waiting.innerText = `${data.username}, it's your turn ... (${data.player})`
+            this.gameEnabled = true
+        })
+
+        socket.on('other_turn', (data)=>{
+            console.log('other turn...')
+            this.$waiting.innerText = `Waiting for user '${data.username}' ...`
+            this.gameEnabled = false
+        })
+
+        socket.on('new_move', (data)=>{
+            console.log('new move: ' + data.field + '('+data.player+')')
+            this.$doc.querySelector('#'+data.field).innerText = data.player
+        })
+
+        socket.on('game_finished', (data)=>{
+            console.log('game finished, winner: ' + data.winner)
+            this.$waiting.innerText = `Game has been finished, winner: '${data.winner}'`
+            this.running = false
+        })
     }
 
     finishGame(resultText){
@@ -42,48 +86,24 @@ export default class{
         this.$resultDiv.innerText = ""
     }
 
-    checkFields(fields){
-        if ((this.$fields[fields[0]].innerText + this.$fields[fields[1]].innerText + this.$fields[fields[2]].innerText).match("XXX|OOO")) {
-            this.$fields[fields[0]].classList.add("fieldWon")
-            this.$fields[fields[1]].classList.add("fieldWon")
-            this.$fields[fields[2]].classList.add("fieldWon")
-            this.player === 1 ? this.player1++ : this.player2++
-            this.finishGame("you win!")
-        }
-    }
-
-    checkBoard(){
-
-        let isBoardFull = true
-        
-        this.checkFields([0,1,2])
-        this.checkFields([3,4,5])
-        this.checkFields([6,7,8])
-        this.checkFields([0,3,6])
-        this.checkFields([1,4,7])
-        this.checkFields([2,5,8])
-        this.checkFields([0,4,8])
-        this.checkFields([2,4,6])
-
-        if (this.running) {
-            this.$fields.forEach(function(element){
-                if (element.innerText === ""){
-                    isBoardFull = false
-                }
-            })
-            if (isBoardFull){
-                this.finishGame("...draw")
-            }
-        }
-    }
-
     onClickField(ev){
-        if (ev.target.innerText === "" && this.running){
-            ev.target.innerText = this.player === 1 ? "X" : "O"
-            this.checkBoard.bind(this)()
-            this.player === 1 ? this.player++ : this.player--
-            this.store.send_action(this.player, ev.target.id)
+        if (ev.target.innerText === "" && this.running && this.gameEnabled){
+            ev.target.innerText = this.playerToken
+            this.send_action(this.player, ev.target.id)
         }
     }
 
+    onChangeNameInput(ev){
+        this.add_user(ev.target.value.trim())
+        this.$nameInput.classList.add("hidden")
+        this.$waiting.classList.remove("hidden")
+    }
+
+    add_user(username) {
+        socket.emit('add_user', {'username': username})
+    }
+
+    send_action(player, field) {
+        socket.emit('player_action', {'player': this.playerToken, 'field': field})
+    }
 }

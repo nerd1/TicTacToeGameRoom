@@ -40,6 +40,10 @@ div.fieldWon {
     background: mediumseagreen;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 #board {
     display: flex;
     width: 400px;

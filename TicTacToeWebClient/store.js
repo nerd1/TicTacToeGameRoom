@@ -15,10 +15,16 @@ socket.on('news', (data)=>{
     socket.emit('my other event', 'hello')
 })
 
+socket.on('start_game', (data)=>console.log('game started...'))
+
 export default class Store {
 
+    add_user(username) {
+        socket.emit('add_user', {'username': username})
+    }
+
     send_action(player, field) {
-        socket.emit('player action', {'player': player, 'field': field})
+        socket.emit('player_action', {'player': player, 'field': field})
     }
 
 }
