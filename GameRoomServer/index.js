@@ -70,4 +70,10 @@ io.on('connection', function (socket) {
             }
         }
     })
+
+    socket.on('new_game', (data)=>{
+        socket.board = null
+        userQueue.push(socket)
+        connectUsers();
+    })
 })

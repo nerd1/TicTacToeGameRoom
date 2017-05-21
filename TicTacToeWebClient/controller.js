@@ -57,33 +57,31 @@ export default class{
             console.log('game finished, winner: ' + data.winner)
             this.$waiting.innerText = `Game has been finished, winner: '${data.winner}'`
             this.running = false
+            if (this.$newGame === undefined){
+                this.$newGame = this.$doc.createElement("a")
+                this.$newGame.innerText = "<start new game>"
+                this.$newGame.addEventListener("click", this.onClickNewGame.bind(this))
+                this.$newGame.setAttribute("id", "newGame")
+                this.$newGame.setAttribute("href", "#")
+            }
+            this.$resultDiv.appendChild(this.$newGame)
         })
     }
 
-    finishGame(resultText){
-        this.$resultDiv.innerText = resultText
-        this.running = false
-        // show result and new game button
-        if (this.$newGame === undefined){
-            this.$newGame = this.$doc.createElement("a")
-            this.$newGame.innerText = "<start new game>"
-            this.$newGame.addEventListener("click", this.onClickNewGame.bind(this))
-            this.$newGame.setAttribute("id", "newGame")
-            this.$newGame.setAttribute("href", "#")
-        }
-        this.$resultDiv.appendChild(this.$newGame)
-        // update statistic
-        this.$statsDiv.innerText = "Player X: " + this.player1 + "\n" + "Player O: " + this.player2
-    }
-
     onClickNewGame(ev){
+        socket.emit('new_game')
+
         this.$fields.forEach(function(element) {
             element.innerText = ""
             element.classList.remove("fieldWon")
         }, this);
+
         this.running = true
         this.$resultDiv.removeChild(this.$newGame)
         this.$resultDiv.innerText = ""
+        this.$waiting.innerText = 'Please wait for other player...'
+        this.$board.classList.add('hidden')
+        
     }
 
     onClickField(ev){
