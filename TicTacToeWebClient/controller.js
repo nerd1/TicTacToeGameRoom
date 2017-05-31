@@ -66,6 +66,20 @@ export default class{
             }
             this.$resultDiv.appendChild(this.$newGame)
         })
+
+        socket.on('stats_update', (data)=>{
+            console.log(data)
+            this.$statsDiv.innerHTML = data.boardList.map(renderStatsItem).join('')
+        })
+
+        function renderStatsItem(item) {
+            return `<li>${item.timestamp}: ${item.player1} (x) vs ${item.player2} (o) >>> result: ${item.status}</li>`
+        }
+
+        // error handling
+        socket.on('connect_failed', (data)=>{
+            console.log('connection failed')
+        })
     }
 
     onClickNewGame(ev){

@@ -11,6 +11,8 @@ let io = socketio.listen(server)
 
 app.use(cors())
 
+// save all played boards in a json file
+
 let userQueue = []
 let boardList = []
 
@@ -21,12 +23,27 @@ io.on('connection', function (socket) {
     // connection tests
     console.log('connection: ' + socket.id)
 
+    function addToBoardList(board) {
+        boardList.unshift(board)
+        console.log('boardList: ' + boardList.map((item)=>item.socketPlayer1.username + '/' + item.socketPlayer2.username))
+        if (boardList.length > 20){
+            boardList.forEach((item,pos)=>{
+                if(item.done && pos > 20) {
+                    boardList.splice(pos,1)
+                }
+            })
+        }
+        send_stats()
+    }
+
     function connectUsers() {
         console.log('userQueue: ' + userQueue.map((item)=>item.username))
         if (userQueue.length > 1) {
             socket.board = new Board(userQueue.shift(), userQueue.shift())
-            boardList.push(socket.board)
             socket.board.socketPlayer2.board = socket.board
+
+            addToBoardList(socket.board)
+
             socket.emit('start_game')
             socket.to(socket.board.socketPlayer1.id).emit('start_game')
             socket.emit('your_turn', {'player':'x', 'username':socket.username})
@@ -69,11 +86,28 @@ io.on('connection', function (socket) {
                 socket.emit('other_turn', {'player': 'x', 'username': socket.board.socketPlayer2.username})
             }
         }
+        send_stats()
     })
 
     socket.on('new_game', (data)=>{
-        socket.board = null
+//        boardList = boardList.filter((item)=>item != socket.board)
+//        socket.board = null
         userQueue.push(socket)
         connectUsers();
     })
+
+    // send statistic
+    function send_stats() {
+        io.sockets.emit("stats_update", 
+            {
+                "boardList": boardList.map((item)=>{return {
+                    "timestamp": item.timestamp,
+                    "player1": item.player1,
+                    "player2": item.player2,
+                    "status": item.winner || 'playing'
+            }}),
+                "userQueue": userQueue.map((item)=>item.username)
+            }
+        )
+    }
 })

@@ -61,7 +61,7 @@ div.row {
     height: 100%;
 }
 
-#result, #stats {
+#result {
     font-family: 'Press Start 2P', cursive;
     margin: 20px 0 20px 0;
     display: flex;
